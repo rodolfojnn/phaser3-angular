@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
-import { MyScene } from './my-scene';
+import { MyScene } from './scenes/my-scene';
 
 @Component({
   selector: 'app-root',
@@ -25,6 +25,8 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     parent: 'content',
   };
 
+  constructor() {}
+
   ngOnInit(): void {
     this.game = new Phaser.Game(this.gameConfig);
   }
@@ -35,7 +37,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngAfterViewInit() {
     this.game.events.once('ready', () => {
-      this.game.scene.add('Scene', new MyScene(), true);
+      this.game.scene.add('Scene', MyScene, true);
     });
   }
 
