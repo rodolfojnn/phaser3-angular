@@ -3,8 +3,7 @@ import { MyScene } from './scenes/my-scene';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  template: '<div id="content"></div>'
 })
 export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   title = 'angular-phaser';
