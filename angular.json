@@ -25,7 +25,9 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/phaser/dist/phaser.min.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -123,5 +125,8 @@
       }
     }
   },
-  "defaultProject": "angular-phaser"
+  "defaultProject": "angular-phaser",
+  "cli": {
+    "analytics": "45b428b8-d32f-4710-99f7-a4315c12a857"
+  }
 }
