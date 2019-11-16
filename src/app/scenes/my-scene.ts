@@ -1,10 +1,15 @@
 import firebase from '@firebase/app';
 import '@firebase/database';
-import { FirebaseDatabase } from '@firebase/database-types';
+import { FirebaseDatabase, Reference } from '@firebase/database-types';
+import { of, Subject, BehaviorSubject } from 'rxjs';
+import { throttleTime} from 'rxjs/operators';
 
 export class MyScene extends Phaser.Scene {
 
-  database: FirebaseDatabase;
+  fbDatabase: FirebaseDatabase;
+  fbPlayersRef: Reference;
+  fbplayersUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
+
   player: Phaser.Physics.Arcade.Image;
   players: Phaser.Physics.Arcade.Image[];
   emitter: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -34,24 +39,42 @@ export class MyScene extends Phaser.Scene {
   }
 
   update() {
-    this.processKeyboard();
+    // Configuração de teclas e teclado
+    this.keyboard();
+    // Envia data do player atual para o Firebase
+    this.sendPlayerData();
   }
 
   private setupFirebase() {
-    this.database = firebase.database();
-    const playersRef = this.database.ref('room01/players');
+    this.fbDatabase = firebase.database();
+    this.fbPlayersRef = this.fbDatabase.ref('room01/players');
 
-    const playersData = {};
-    playersData[this.player.getData('id')] = {position: {x:1, y:2}};
-    playersRef.set(playersData);
+    this.fbplayersUpdate$
+      .pipe(
+        throttleTime(500)
+      )
+      .subscribe(v => {
+        this.fbPlayersRef.update(v);
+      })
 
-    playersRef.on('value', v => {
+    this.fbPlayersRef.on('value', v => {
       console.log(v.val());
     });
 
   }
 
-  private processKeyboard() {
+  private sendPlayerData() {
+    if (!this.player.body.velocity.x && !this.player.body.velocity.y) { return; }
+
+    const playersData = {};
+    playersData[this.player.getData('id')] = {
+      x: this.player.x.toFixed(0),
+      y: this.player.y.toFixed(0)
+    };
+    this.fbplayersUpdate$.next(playersData)
+  }
+
+  private keyboard() {
     this.player.setAcceleration(0);
 
     if (this.cursors.left.isDown) {
@@ -73,7 +96,9 @@ export class MyScene extends Phaser.Scene {
       this.player.setDamping(true);
       this.player.setDrag(0.95);
       this.player.setMaxVelocity(150);
-      this.player.setData('id', Date.now());
+
+      this.player.setData('id', localStorage.getItem('playerId') || Date.now());
+
       /*
       const particles = this.add.particles('red');
       this.emitter = particles.createEmitter({
