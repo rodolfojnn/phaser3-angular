@@ -1,12 +1,17 @@
+import firebase from '@firebase/app';
+import '@firebase/database';
+import { FirebaseDatabase } from '@firebase/database-types';
+
 export class MyScene extends Phaser.Scene {
 
+  database: FirebaseDatabase;
   player: Phaser.Physics.Arcade.Image;
   players: Phaser.Physics.Arcade.Image[];
   emitter: Phaser.GameObjects.Particles.ParticleEmitter;
   cursors: Phaser.Input.Keyboard.CursorKeys;
 
   constructor() {
-      super({key: 'Scene'});
+    super({key: 'Scene'});
   }
 
   preload() {
@@ -24,10 +29,26 @@ export class MyScene extends Phaser.Scene {
       this.cursors = this.input.keyboard.createCursorKeys();
 
       this.cameras.main.startFollow(this.player, false, 0.1, 0.1);
+
+      this.setupFirebase();
   }
 
   update() {
     this.processKeyboard();
+  }
+
+  private setupFirebase() {
+    this.database = firebase.database();
+    const playersRef = this.database.ref('room01/players');
+
+    const playersData = {};
+    playersData[this.player.getData('id')] = {position: {x:1, y:2}};
+    playersRef.set(playersData);
+
+    playersRef.on('value', v => {
+      console.log(v.val());
+    });
+
   }
 
   private processKeyboard() {
@@ -52,7 +73,7 @@ export class MyScene extends Phaser.Scene {
       this.player.setDamping(true);
       this.player.setDrag(0.95);
       this.player.setMaxVelocity(150);
-
+      this.player.setData('id', Date.now());
       /*
       const particles = this.add.particles('red');
       this.emitter = particles.createEmitter({

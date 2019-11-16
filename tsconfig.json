@@ -17,6 +17,9 @@
       "es2017",
       "dom",
       "scripthost"
+    ],
+    "types" : [
+      "firebase"
     ]
   }
 }
