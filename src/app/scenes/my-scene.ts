@@ -1,6 +1,6 @@
 import firebase from '@firebase/app';
 import '@firebase/database';
-import { FirebaseDatabase, Reference } from '@firebase/database-types';
+import { FirebaseDatabase, Reference, DataSnapshot } from '@firebase/database-types';
 import { of, Subject, BehaviorSubject } from 'rxjs';
 import { throttleTime} from 'rxjs/operators';
 
@@ -57,10 +57,14 @@ export class MyScene extends Phaser.Scene {
         this.fbPlayersRef.update(v);
       })
 
-    this.fbPlayersRef.on('value', v => {
-      console.log(v.val());
-    });
+    this.fbPlayersRef.on('value', this.renderPlayers)
 
+  }
+
+  private renderPlayers(players: DataSnapshot) {
+    players.forEach(player => {
+      console.log(player.key, player.val());
+    });
   }
 
   private sendPlayerData() {
@@ -68,8 +72,8 @@ export class MyScene extends Phaser.Scene {
 
     const playersData = {};
     playersData[this.player.getData('id')] = {
-      x: this.player.x.toFixed(0),
-      y: this.player.y.toFixed(0)
+      x: +this.player.x.toFixed(0),
+      y: +this.player.y.toFixed(0)
     };
     this.fbplayersUpdate$.next(playersData)
   }
