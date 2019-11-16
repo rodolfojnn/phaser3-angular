@@ -12,13 +12,12 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
   public readonly gameConfig: GameConfig = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: 480,
+    height: 440,
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { y: 200 },
-        debug: false,
+        debug: true
       }
     },
     parent: 'content',
