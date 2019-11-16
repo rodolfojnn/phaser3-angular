@@ -11,7 +11,7 @@ export class MyScene extends Phaser.Scene {
 
   preload() {
       this.load.setBaseURL('https://labs.phaser.io');
-      this.load.image('sky', 'assets/skies/space3.png');
+      this.load.image('sky', 'assets//textures/tiles.jpg');
       this.load.image('logo', 'assets/sprites/32x32.png');
       this.load.image('red', 'assets/particles/red.png');
   }
@@ -19,20 +19,7 @@ export class MyScene extends Phaser.Scene {
   create() {
       this.add.image(400, 300, 'sky');
 
-      const particles = this.add.particles('red');
-
-      this.player = this.physics.add.image(400, 100, 'logo');
-      this.player.setDamping(true);
-      this.player.setDrag(0.95);
-      this.player.setMaxVelocity(150);
-      /*
-      this.emitter = particles.createEmitter({
-          speed: 10,
-          scale: { start: 1, end: 0 },
-          blendMode: Phaser.BlendModes.ADD
-      });
-      this.emitter.startFollow(this.player);
-      */
+      this.createPlayer();
 
       this.cursors = this.input.keyboard.createCursorKeys();
 
@@ -58,6 +45,23 @@ export class MyScene extends Phaser.Scene {
     if (this.cursors.down.isDown) {
       this.player.setAccelerationY(500);
     }
+  }
+
+  private createPlayer() {
+      this.player = this.physics.add.image(400, 100, 'logo');
+      this.player.setDamping(true);
+      this.player.setDrag(0.95);
+      this.player.setMaxVelocity(150);
+
+      /*
+      const particles = this.add.particles('red');
+      this.emitter = particles.createEmitter({
+          speed: 10,
+          scale: { start: 1, end: 0 },
+          blendMode: Phaser.BlendModes.ADD
+      });
+      this.emitter.startFollow(this.player);
+      */
   }
 
 }
