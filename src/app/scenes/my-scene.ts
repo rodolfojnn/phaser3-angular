@@ -14,6 +14,7 @@ export class MyScene extends Phaser.Scene {
   fbPlayersRef: Reference;
   fbplayersUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
 
+  throttleTime = 250;
   playerId = localStorage.getItem('playerId');
   get player() { return this.players[this.playerId]; }
   players: {[key: string]: Phaser.Physics.Arcade.Image};
@@ -54,7 +55,7 @@ export class MyScene extends Phaser.Scene {
     this.fbDatabase = firebase.database();
     this.fbPlayersRef = this.fbDatabase.ref('room01/players');
 
-    this.fbplayersUpdate$.pipe(throttleTime(200)).subscribe(v => {
+    this.fbplayersUpdate$.pipe(throttleTime(this.throttleTime)).subscribe(v => {
       this.fbPlayersRef.update(v);
     })
 
@@ -64,10 +65,22 @@ export class MyScene extends Phaser.Scene {
 
   private renderPlayers(players: DataSnapshot) {
     players.forEach(player => {                                         // console.log(player.key, player.val());
-      if (player.key === this.player.getData('id')) { return; }
       if (!this.players || !this.players[player.key]) { return; }
-      // this.players[player.key].setPosition(player.val().x, player.val().y);
-      this.physics.moveTo(this.players[player.key], player.val().x, player.val().y, null, 200);
+      const playerKey = this.players[player.key];
+      const playerVal = player.val();
+      if (playerKey.x === 0 && playerKey.y === 0) {
+        playerKey.x = playerVal.x;
+        playerKey.y = playerVal.y;
+        return;
+      }
+      if (player.key === this.playerId) { return; }
+      this.physics.moveTo(
+        playerKey,
+        playerVal.x,
+        playerVal.y,
+        null,
+        this.throttleTime
+      );
     });
   }
 
@@ -103,7 +116,7 @@ export class MyScene extends Phaser.Scene {
       this.players = {};
       for (let index = 1; index < 5; index++) {
         const id = 'player-' + index;
-        const newPlayer = this.physics.add.image(400, 200, 'logo');
+        const newPlayer = this.physics.add.image(0, 0, 'logo');
         newPlayer.setDamping(true);
         newPlayer.setDrag(0.95);
         newPlayer.setMaxVelocity(150);
