@@ -3,15 +3,20 @@ import '@firebase/database';
 import { FirebaseDatabase, Reference, DataSnapshot } from '@firebase/database-types';
 import { of, Subject, BehaviorSubject } from 'rxjs';
 import { throttleTime} from 'rxjs/operators';
+import { Injectable } from '@angular/core';
 
+@Injectable({
+  providedIn: 'root'
+})
 export class MyScene extends Phaser.Scene {
 
   fbDatabase: FirebaseDatabase;
   fbPlayersRef: Reference;
   fbplayersUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
 
-  player: Phaser.Physics.Arcade.Image;
-  players: Phaser.Physics.Arcade.Image[];
+  playerId = localStorage.getItem('playerId');
+  get player() { return this.players[this.playerId]; }
+  players: {[key: string]: Phaser.Physics.Arcade.Image};
   emitter: Phaser.GameObjects.Particles.ParticleEmitter;
   cursors: Phaser.Input.Keyboard.CursorKeys;
 
@@ -20,16 +25,16 @@ export class MyScene extends Phaser.Scene {
   }
 
   preload() {
-      this.load.setBaseURL('https://labs.phaser.io');
-      this.load.image('sky', 'assets//textures/tiles.jpg');
-      this.load.image('logo', 'assets/sprites/32x32.png');
-      this.load.image('red', 'assets/particles/red.png');
+      this.load.image('sky', 'https://labs.phaser.io/assets//textures/tiles.jpg');
+      this.load.image('logo', 'https://labs.phaser.io/assets/sprites/32x32.png');
+      this.load.image('red', 'https://labs.phaser.io/assets/particles/red.png');
+      this.load.image('otherPlayer', './assets/otherPlayer.png')
   }
 
   create() {
       this.add.image(400, 300, 'sky');
 
-      this.createPlayer();
+      this.createPlayers();
 
       this.cursors = this.input.keyboard.createCursorKeys();
 
@@ -49,21 +54,20 @@ export class MyScene extends Phaser.Scene {
     this.fbDatabase = firebase.database();
     this.fbPlayersRef = this.fbDatabase.ref('room01/players');
 
-    this.fbplayersUpdate$
-      .pipe(
-        throttleTime(500)
-      )
-      .subscribe(v => {
-        this.fbPlayersRef.update(v);
-      })
+    this.fbplayersUpdate$.pipe(throttleTime(200)).subscribe(v => {
+      this.fbPlayersRef.update(v);
+    })
 
-    this.fbPlayersRef.on('value', this.renderPlayers)
+    this.fbPlayersRef.on('value', v => this.renderPlayers(v))
 
   }
 
   private renderPlayers(players: DataSnapshot) {
-    players.forEach(player => {
-      console.log(player.key, player.val());
+    players.forEach(player => {                                         // console.log(player.key, player.val());
+      if (player.key === this.player.getData('id')) { return; }
+      if (!this.players || !this.players[player.key]) { return; }
+      // this.players[player.key].setPosition(player.val().x, player.val().y);
+      this.physics.moveTo(this.players[player.key], player.val().x, player.val().y, null, 200);
     });
   }
 
@@ -95,13 +99,17 @@ export class MyScene extends Phaser.Scene {
     }
   }
 
-  private createPlayer() {
-      this.player = this.physics.add.image(400, 100, 'logo');
-      this.player.setDamping(true);
-      this.player.setDrag(0.95);
-      this.player.setMaxVelocity(150);
-
-      this.player.setData('id', localStorage.getItem('playerId') || Date.now());
+  private createPlayers() {
+      this.players = {};
+      for (let index = 1; index < 5; index++) {
+        const id = 'player-' + index;
+        const newPlayer = this.physics.add.image(400, 200, 'logo');
+        newPlayer.setDamping(true);
+        newPlayer.setDrag(0.95);
+        newPlayer.setMaxVelocity(150);
+        newPlayer.setData('id', id);
+        this.players[id] = newPlayer;
+      }
 
       /*
       const particles = this.add.particles('red');
