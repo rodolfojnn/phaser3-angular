@@ -68,7 +68,7 @@ export class MyScene extends Phaser.Scene {
       if (!this.players || !this.players[player.key]) { return; }
       const playerKey = this.players[player.key];
       const playerVal = player.val();
-      if (playerKey.x === 0 && playerKey.y === 0) {
+      if (playerKey.x === .1 && playerKey.y === .1) {
         playerKey.x = playerVal.x;
         playerKey.y = playerVal.y;
         return;
@@ -116,7 +116,7 @@ export class MyScene extends Phaser.Scene {
       this.players = {};
       for (let index = 1; index < 5; index++) {
         const id = 'player-' + index;
-        const newPlayer = this.physics.add.image(0, 0, 'logo');
+        const newPlayer = this.physics.add.image(.1, .1, 'logo');
         newPlayer.setDamping(true);
         newPlayer.setDrag(0.95);
         newPlayer.setMaxVelocity(150);
