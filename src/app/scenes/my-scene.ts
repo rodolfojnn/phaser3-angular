@@ -15,7 +15,7 @@ export class MyScene extends Phaser.Scene {
   fbplayersUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
 
   throttleTime = 250;
-  playerId = localStorage.getItem('playerId');
+  playerId = localStorage.getItem('playerId') || 'player-1';
   get player() { return this.players[this.playerId]; }
   players: {[key: string]: Phaser.Physics.Arcade.Image};
   emitter: Phaser.GameObjects.Particles.ParticleEmitter;
