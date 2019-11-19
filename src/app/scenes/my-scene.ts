@@ -68,19 +68,13 @@ export class MyScene extends Phaser.Scene {
       if (!this.players || !this.players[player.key]) { return; }
       const playerKey = this.players[player.key];
       const playerVal = player.val();
-      if (playerKey.x === .1 && playerKey.y === .1) {
-        playerKey.x = playerVal.x;
-        playerKey.y = playerVal.y;
-        return;
-      }
-      if (player.key === this.playerId) { return; }
-      this.physics.moveTo(
-        playerKey,
-        playerVal.x,
-        playerVal.y,
-        null,
-        this.throttleTime
-      );
+      if (player.key === this.playerId && playerKey.x !== .1) { return; }
+      this.tweens.timeline({
+        targets: playerKey,
+        ease: 'Cubic',
+        duration: this.throttleTime * 2,
+        tweens: [{x: playerVal.x, y: playerVal.y}]
+      });
     });
   }
 
