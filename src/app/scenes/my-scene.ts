@@ -59,11 +59,11 @@ export class MyScene extends Phaser.Scene {
       this.fbPlayersRef.update(v);
     })
 
-    this.fbPlayersRef.on('value', v => this.renderPlayers(v))
+    this.fbPlayersRef.on('value', v => this.renderPlayersInfo(v))
 
   }
 
-  private renderPlayers(players: DataSnapshot) {
+  private renderPlayersInfo(players: DataSnapshot) {
     players.forEach(player => {                                         // console.log(player.key, player.val());
       if (!this.players || !this.players[player.key]) { return; }
       const playerKey = this.players[player.key];
