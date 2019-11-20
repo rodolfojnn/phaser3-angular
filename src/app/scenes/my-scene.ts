@@ -2,7 +2,7 @@ import firebase from '@firebase/app';
 import '@firebase/database';
 import { FirebaseDatabase, Reference, DataSnapshot } from '@firebase/database-types';
 import { of, Subject, BehaviorSubject } from 'rxjs';
-import { throttleTime} from 'rxjs/operators';
+import { throttleTime, filter} from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 
 @Injectable({
@@ -12,7 +12,7 @@ export class MyScene extends Phaser.Scene {
 
   fbDatabase: FirebaseDatabase;
   fbPlayersRef: Reference;
-  fbplayersUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
+  fbplayerUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
 
   throttleTime = 250;
   playerId = localStorage.getItem('playerId') || 'player-1';
@@ -36,12 +36,11 @@ export class MyScene extends Phaser.Scene {
       this.add.image(400, 300, 'sky');
 
       this.createPlayers();
+      this.setupFirebase();
 
       this.cursors = this.input.keyboard.createCursorKeys();
 
       this.cameras.main.startFollow(this.player, false, 0.1, 0.1);
-
-      this.setupFirebase();
   }
 
   update() {
@@ -55,7 +54,10 @@ export class MyScene extends Phaser.Scene {
     this.fbDatabase = firebase.database();
     this.fbPlayersRef = this.fbDatabase.ref('room01/players');
 
-    this.fbplayersUpdate$.pipe(throttleTime(this.throttleTime)).subscribe(v => {
+    this.fbplayerUpdate$.pipe(
+      throttleTime(this.throttleTime),
+      filter(v => v[this.playerId])
+    ).subscribe(v => {                                                  // console.log(v[this.playerId].x, v[this.playerId].y); // console.log(this.player.x.toFixed(0), this.player.y.toFixed(0));
       this.fbPlayersRef.update(v);
     })
 
@@ -64,7 +66,7 @@ export class MyScene extends Phaser.Scene {
   }
 
   private renderPlayersInfo(players: DataSnapshot) {
-    players.forEach(player => {                                         // console.log(player.key, player.val());
+    players.forEach(player => {                                         console.log(player.key, player.val());
       if (!this.players || !this.players[player.key]) { return; }
       const playerKey = this.players[player.key];
       const playerVal = player.val();
@@ -83,10 +85,10 @@ export class MyScene extends Phaser.Scene {
 
     const playersData = {};
     playersData[this.player.getData('id')] = {
-      x: +this.player.x.toFixed(0),
-      y: +this.player.y.toFixed(0)
+      x: Math.round(this.player.x),
+      y: Math.round(this.player.y)
     };
-    this.fbplayersUpdate$.next(playersData)
+    this.fbplayerUpdate$.next(playersData)
   }
 
   private keyboard() {
@@ -127,6 +129,12 @@ export class MyScene extends Phaser.Scene {
       });
       this.emitter.startFollow(this.player);
       */
+  }
+
+  private testPosition(playerA, playerB) {
+    if (!playerA) return false;
+    console.log(playerA.x, Math.round(playerB.x));
+    return playerA && playerA.x !== Math.round(playerB.x) && playerA.y !== Math.round(playerB.y);
   }
 
 }
