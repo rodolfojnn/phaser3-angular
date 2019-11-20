@@ -66,7 +66,7 @@ export class MyScene extends Phaser.Scene {
   }
 
   private renderPlayersInfo(players: DataSnapshot) {
-    players.forEach(player => {                                         console.log(player.key, player.val());
+    players.forEach(player => {                                         // console.log(player.key, player.val());
       if (!this.players || !this.players[player.key]) { return; }
       const playerKey = this.players[player.key];
       const playerVal = player.val();
@@ -129,12 +129,6 @@ export class MyScene extends Phaser.Scene {
       });
       this.emitter.startFollow(this.player);
       */
-  }
-
-  private testPosition(playerA, playerB) {
-    if (!playerA) return false;
-    console.log(playerA.x, Math.round(playerB.x));
-    return playerA && playerA.x !== Math.round(playerB.x) && playerA.y !== Math.round(playerB.y);
   }
 
 }
