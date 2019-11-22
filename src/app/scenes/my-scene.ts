@@ -14,12 +14,15 @@ export class MyScene extends Phaser.Scene {
   fbPlayersRef: Reference;
   fbplayerUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
 
-  throttleTime = 250;
-  playerId = localStorage.getItem('playerId') || 'player-1';
+  readonly THROTTLE_TIME = 120;
+  readonly MAX_VELOCITY = 150;
+
+  playerId = localStorage.getItem('playerId') || 'p1';
   get player() { return this.players[this.playerId]; }
   players: {[key: string]: Phaser.Physics.Arcade.Image};
   emitter: Phaser.GameObjects.Particles.ParticleEmitter;
   cursors: Phaser.Input.Keyboard.CursorKeys;
+  pointer: Phaser.Input.Pointer;
 
   constructor() {
     super({key: 'Scene'});
@@ -40,6 +43,8 @@ export class MyScene extends Phaser.Scene {
 
       this.cursors = this.input.keyboard.createCursorKeys();
 
+      this.pointer = this.input.activePointer;
+
       this.cameras.main.startFollow(this.player, false, 0.1, 0.1);
   }
 
@@ -55,7 +60,7 @@ export class MyScene extends Phaser.Scene {
     this.fbPlayersRef = this.fbDatabase.ref('room01/players');
 
     this.fbplayerUpdate$.pipe(
-      throttleTime(this.throttleTime),
+      throttleTime(this.THROTTLE_TIME),
       filter(v => v[this.playerId])
     ).subscribe(v => {                                                  // console.log(v[this.playerId].x, v[this.playerId].y); // console.log(this.player.x.toFixed(0), this.player.y.toFixed(0));
       this.fbPlayersRef.update(v);
@@ -74,7 +79,7 @@ export class MyScene extends Phaser.Scene {
       this.tweens.timeline({
         targets: playerKey,
         ease: 'Cubic',
-        duration: this.throttleTime * 2,
+        duration: this.THROTTLE_TIME * 2,
         tweens: [{x: playerVal.x, y: playerVal.y}]
       });
     });
@@ -92,6 +97,16 @@ export class MyScene extends Phaser.Scene {
   }
 
   private keyboard() {
+    if (this.pointer.isDown) {
+      const worldPoint = this.cameras.main.getWorldPoint(this.pointer.x, this.pointer.y);
+      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, worldPoint.x, worldPoint.y);
+      if (distance < 30) {
+        return;
+      }
+      this.physics.moveToObject(this.player, worldPoint, (this.MAX_VELOCITY >> 4) + distance);
+    }
+
+    /*
     this.player.setAcceleration(0);
 
     if (this.cursors.left.isDown) {
@@ -106,16 +121,17 @@ export class MyScene extends Phaser.Scene {
     if (this.cursors.down.isDown) {
       this.player.setAccelerationY(500);
     }
+    */
   }
 
   private createPlayers() {
       this.players = {};
       for (let index = 1; index < 5; index++) {
-        const id = 'player-' + index;
+        const id = 'p' + index;
         const newPlayer = this.physics.add.image(.1, .1, 'logo');
         newPlayer.setDamping(true);
         newPlayer.setDrag(0.95);
-        newPlayer.setMaxVelocity(150);
+        newPlayer.setMaxVelocity(this.MAX_VELOCITY);
         newPlayer.setData('id', id);
         this.players[id] = newPlayer;
       }
