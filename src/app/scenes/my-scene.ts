@@ -15,12 +15,14 @@ export class MyScene extends Phaser.Scene {
   fbplayerUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
 
   readonly THROTTLE_TIME = 120;
-  readonly MAX_VELOCITY = 150;
+  readonly MAX_VELOCITY = 50;
 
   playerId = localStorage.getItem('playerId') || 'p1';
   get player() { return this.players[this.playerId]; }
-  players: {[key: string]: Phaser.Physics.Arcade.Image};
+  players: {[key: string]: Phaser.Physics.Arcade.Sprite};
+  otherPlayersGroup: Phaser.Physics.Arcade.Group;
   emitter: Phaser.GameObjects.Particles.ParticleEmitter;
+
   cursors: Phaser.Input.Keyboard.CursorKeys;
   pointer: Phaser.Input.Pointer;
 
@@ -38,14 +40,15 @@ export class MyScene extends Phaser.Scene {
   create() {
       this.add.image(400, 300, 'sky');
 
+      this.pointer = this.input.activePointer;
+
       this.createPlayers();
       this.setupFirebase();
 
       this.cursors = this.input.keyboard.createCursorKeys();
-
-      this.pointer = this.input.activePointer;
-
       this.cameras.main.startFollow(this.player, false, 0.1, 0.1);
+
+      this.colliders();
   }
 
   update() {
@@ -53,6 +56,12 @@ export class MyScene extends Phaser.Scene {
     this.keyboard();
     // Envia data do player atual para o Firebase
     this.sendPlayerData();
+  }
+
+  colliders() {
+    this.physics.add.collider(this.player, this.otherPlayersGroup, <ArcadePhysicsCallback>(a, b) => {
+      b.body.immovable = true;
+    });
   }
 
   private setupFirebase() {
@@ -100,51 +109,31 @@ export class MyScene extends Phaser.Scene {
     if (this.pointer.isDown) {
       const worldPoint = this.cameras.main.getWorldPoint(this.pointer.x, this.pointer.y);
       const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, worldPoint.x, worldPoint.y);
-      if (distance < 30) {
-        return;
-      }
-      this.physics.moveToObject(this.player, worldPoint, (this.MAX_VELOCITY >> 4) + distance);
+      if (distance < 30) { return; }
+      this.physics.moveToObject(this.player, worldPoint, (this.MAX_VELOCITY >> 5) + distance);
     }
-
-    /*
-    this.player.setAcceleration(0);
-
-    if (this.cursors.left.isDown) {
-      this.player.setAccelerationX(-500);
-    }
-    if (this.cursors.right.isDown) {
-      this.player.setAccelerationX(500);
-    }
-    if (this.cursors.up.isDown) {
-      this.player.setAccelerationY(-500);
-    }
-    if (this.cursors.down.isDown) {
-      this.player.setAccelerationY(500);
-    }
-    */
   }
 
   private createPlayers() {
       this.players = {};
+      this.otherPlayersGroup = this.physics.add.group();
       for (let index = 1; index < 5; index++) {
+        const newPlayer = this.physics.add.sprite(.1, .1, 'logo');
         const id = 'p' + index;
-        const newPlayer = this.physics.add.image(.1, .1, 'logo');
-        newPlayer.setDamping(true);
-        newPlayer.setDrag(0.95);
-        newPlayer.setMaxVelocity(this.MAX_VELOCITY);
         newPlayer.setData('id', id);
         this.players[id] = newPlayer;
-      }
 
-      /*
-      const particles = this.add.particles('red');
-      this.emitter = particles.createEmitter({
-          speed: 10,
-          scale: { start: 1, end: 0 },
-          blendMode: Phaser.BlendModes.ADD
-      });
-      this.emitter.startFollow(this.player);
-      */
+        // É outro player
+        if (this.playerId !== id) {
+          this.otherPlayersGroup.add(newPlayer);
+          continue;
+        }
+
+        // É o player atual
+        newPlayer.setDamping(true);
+        newPlayer.setDrag(0.90);
+        newPlayer.setMaxVelocity(this.MAX_VELOCITY);
+      }
   }
 
 }
