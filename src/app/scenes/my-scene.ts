@@ -14,8 +14,8 @@ export class MyScene extends Phaser.Scene {
   fbPlayersRef: Reference;
   fbplayerUpdate$: BehaviorSubject<any> = new BehaviorSubject({});
 
-  readonly THROTTLE_TIME = 120;
-  readonly MAX_VELOCITY = 50;
+  readonly THROTTLE_TIME = 60;
+  readonly MAX_VELOCITY = 60;
 
   playerId = localStorage.getItem('playerId') || 'p1';
   get player() { return this.players[this.playerId]; }
@@ -58,9 +58,13 @@ export class MyScene extends Phaser.Scene {
     this.sendPlayerData();
   }
 
-  colliders() {
-    this.physics.add.collider(this.player, this.otherPlayersGroup, <ArcadePhysicsCallback>(a, b) => {
-      b.body.immovable = true;
+  private colliders() {
+    this.physics.add.collider(this.player, this.otherPlayersGroup, <ArcadePhysicsCallback>(a: Phaser.Physics.Arcade.Sprite, b: Phaser.Physics.Arcade.Sprite) => {
+      b.setVelocity(0);
+      b.setImmovable(true);
+      if (a.body.velocity.x || a.body.velocity.y) {
+        // a.setScale(a.scaleX + .01, a.scaleY + .01);
+      }
     });
   }
 
@@ -84,7 +88,7 @@ export class MyScene extends Phaser.Scene {
       if (!this.players || !this.players[player.key]) { return; }
       const playerKey = this.players[player.key];
       const playerVal = player.val();
-      if (player.key === this.playerId && playerKey.x !== .1) { return; }
+      if (player.key === this.playerId && playerKey.y !== .1) { return; }
       this.tweens.timeline({
         targets: playerKey,
         ease: 'Cubic',
@@ -118,9 +122,10 @@ export class MyScene extends Phaser.Scene {
       this.players = {};
       this.otherPlayersGroup = this.physics.add.group();
       for (let index = 1; index < 5; index++) {
-        const newPlayer = this.physics.add.sprite(.1, .1, 'logo');
+        const newPlayer = this.physics.add.sprite(50 * index, .1, 'logo');
         const id = 'p' + index;
         newPlayer.setData('id', id);
+        newPlayer.setScale(.8);
         this.players[id] = newPlayer;
 
         // É outro player
